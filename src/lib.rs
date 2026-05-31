@@ -1,3 +1,4 @@
+#![deny(unsafe_code)]
 //! # lau-categorical-homotopy
 //!
 //! Homotopy type theory meets agent systems — paths, homotopies, fundamental
@@ -150,11 +151,11 @@ impl TopologicalSpace {
     }
 
     /// Find the index of the point nearest to `x`.
-    pub fn nearest(&self, _x: f64) -> usize {
+    pub fn nearest(&self, x: f64) -> usize {
         self.points
             .iter()
             .enumerate()
-            .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+            .min_by(|(_, a), (_, b)| (**a - x).abs().partial_cmp(&(**b - x).abs()).unwrap())
             .map(|(i, _)| i)
             .unwrap_or(0)
     }
@@ -1663,11 +1664,12 @@ mod tests {
     #[test]
     fn theorem_6_groupoid_associative() {
         let space = TopologicalSpace::interval(10);
-        let fg = FundamentalGroupoid::new(space, vec![0, 3, 6, 9]);
+        let fg = FundamentalGroupoid::new(space.clone(), vec![0, 3, 6, 9]);
 
-        let p01 = Path::new(vec![0.0, 0.3]);
-        let p12 = Path::new(vec![0.3, 0.6]);
-        let p23 = Path::new(vec![0.6, 0.9]);
+        // Use exact point values from interval(10): 0.0, 1/3, 2/3, 1.0
+        let p01 = Path::new(vec![space.points[0], space.points[3]]);
+        let p12 = Path::new(vec![space.points[3], space.points[6]]);
+        let p23 = Path::new(vec![space.points[6], space.points[9]]);
 
         let c01 = fg.homotopy_class(&p01);
         let c12 = fg.homotopy_class(&p12);
